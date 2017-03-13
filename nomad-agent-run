@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+HOSTNAME=$(hostname -I | cut -f1 '-d ')
+DATA_DIR=/var/lib/nomad
+
+
+CONFIG=$(mktemp)
+echo "using config file $CONFIG"
+
+mkdir -p "$DATA_DIR"
+
+cat nomad-agent-config.template | sed -e "s|{{DATA_DIR}}|${DATA_DIR}|g; s|{{HOSTNAME}}|$HOSTNAME|g" > "$CONFIG"
+
+nomad agent "-config=$CONFIG"
