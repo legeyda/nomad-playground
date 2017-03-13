@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+BASE=/opt/nomad-wrap/0.5.6
+mkdir -p "$BASE"
+NOMAD="$BASE/nomad"
+
+
+if [ ! -f "$NOMAD" -o 34474824 != $(getsize "$NOMAD") ]; then
+
+	if which curl; then
+		curl --location --output "$OUTPUT" "$URL"
+	elif which wget; then
+		wget "--output-document=$OUTPUT" "$URL"
+	else
+		echo "unable to download $1 neither wget nor curl found"
+		exit 1
+	fi
+
+fi
+
+TEMP="$(mktemp -d)"
+#https://github.com/hashicorp/nomad/archive/v0.5.6.zip

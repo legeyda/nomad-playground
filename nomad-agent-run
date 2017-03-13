@@ -1,14 +1,32 @@
 #!/usr/bin/env bash
 
+# paramter values
 HOSTNAME=$(hostname -I | cut -f1 '-d ')
 DATA_DIR=/var/lib/nomad
+CONFIG_DIR=$(mktemp -d)
+
+# prepare environment
+mkdir -p "$DATA_DIR" "$CONFIG_DIR"
+cat nomad-agent-config.template | sed -e "s|{{DATA_DIR}}|${DATA_DIR}|g; s|{{HOSTNAME}}|$HOSTNAME|g" > "$CONFIG_DIR/config.hcl"
+# or CONFIG_DIR/local.json for dockerized nomad
+
+nomad agent "-config=$CONFIG_DIR/config.hcl"
+
+# run
+exit
+rkt --insecure-options=image run \
+		--volume "config,kind=host,source=$CONFIG_DIR" \
+		--volume "data,kind=host,source=$DATA_DIR" \
+		--volume rkt,kind=host,source=/var/lib/rkt \
+		--net=host \
+		--dns=host \
+		docker://djenriquez/nomad:v0.5.6 \
+				--mount volume=config,target=/etc/nomad \
+				--mount volume=data,target=/opt/nomad \
+				--mount volume=rkt,target=/var/lib/rkt \
+				-- agent
 
 
-CONFIG=$(mktemp)
-echo "using config file $CONFIG"
 
-mkdir -p "$DATA_DIR"
 
-cat nomad-agent-config.template | sed -e "s|{{DATA_DIR}}|${DATA_DIR}|g; s|{{HOSTNAME}}|$HOSTNAME|g" > "$CONFIG"
-
-nomad agent "-config=$CONFIG"
+#nomad agent "-config=$CONFIG" 
